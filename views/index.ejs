@@ -1,0 +1,89 @@
+<html>
+<head>
+<title>Chat Room</title>
+    <!-- <link rel='stylesheet' href='/stylesheets/style.css' /> -->
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script type ="text/javascript" src="/socket.io/socket.io.js"></script>
+    <script type ="text/javascript">
+    var name = prompt('What is your username?');
+    var messages = [];
+        $(document).ready(function (){
+        
+        
+        var socket = io.connect();
+        socket.emit('user_signin', {name:name})
+        socket.on('new_user', function(data){
+            console.log(data.users);
+            $('#users').html(" ");
+            for (index in data.users){
+               
+                $('#users').append("<p>"+data.users[index].name+"</p>")
+            }
+            socket.emit('need_messages');
+        });
+
+        $('form').submit(function(event){
+            event.preventDefault();
+
+            socket.emit('send_message',{
+                user: name,
+                message: $('#message').val()
+            });
+            $('#message').val("")
+          
+        })
+          socket.on('new_message', function(data){
+            // console.log(data);
+            if (data.message){
+                var html = "";
+                for (var i = 0; i < data.message.length; i ++){
+                    html += "<div class='message'>"+data.message[i].user+": "+data.message[i].message+"</div><br>"
+                }
+                $('#chat').html(html);
+                $('#chat').scrollTop($('#chat')[0].scrollHeight);
+            }
+                // $('#chat').append("<div class='message'>"+data.user+": "+data.message+"</div>")
+            });
+
+          socket.emit('disconnect')
+
+        })
+    </script>
+</head>
+<body>
+    <h1>Group Chat Room</h1>
+    <div id="chat">
+    </div>
+    <div id="users"></div>
+        <form>
+        <textarea name="message" id="message"></textarea>
+            <input type="submit" value="send">
+        </form>
+
+</body>
+</html><br>
+<style>
+div {
+    border:1px dotted red;
+}
+textarea {
+    width:500px;
+    height:100px;
+}
+#chat{
+    overflow: auto;
+}
+#users{
+    padding-left:10px;
+    overflow: auto;
+    vertical-align: top;
+    height:300px;
+    width:200px;
+    display: inline-block;
+}
+#chat {
+    display: inline-block;
+    width:500px;
+    height:300px;
+    border: 1px solid black;
+}
